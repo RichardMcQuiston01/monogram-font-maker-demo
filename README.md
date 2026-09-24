@@ -11,8 +11,21 @@ TypeScript based Single Page Application (SPA) demo site demonstrating features 
 
 ### Prerequisites
 
-- Node.js 20+
+- Node.js `^20.19.0` or `>=22.12.0` (required by Vite 8 / Rolldown)
 - npm
+
+To regenerate `public/sample-monogram-kit.zip` via `npm run generate:sample-kit`,
+you'll also need a TrueType/OpenType font on disk (DejaVu Serif Bold by
+default, commonly at `/usr/share/fonts/truetype/dejavu/DejaVuSerif-Bold.ttf`
+on Linux). If you don't have that font, point `SAMPLE_KIT_FONT_PATH` at any
+other `.ttf`/`.otf` file, e.g.:
+
+```bash
+SAMPLE_KIT_FONT_PATH=/path/to/Some-Font.ttf npm run generate:sample-kit
+```
+
+This is only needed to regenerate the kit — the committed ZIP works out of
+the box.
 
 ### Installation
 
