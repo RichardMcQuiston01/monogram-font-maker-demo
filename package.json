@@ -1,0 +1,35 @@
+{
+  "name": "monogram-font-maker-demo",
+  "private": true,
+  "version": "0.1.0",
+  "description": "TypeScript single-page demo of @richardmcquiston01/monogram-font-maker: upload a ZIP of monogram letter SVGs and get back a live, installable font, entirely in the browser.",
+  "author": "Richard McQuiston <https://richardmcquiston.com/>",
+  "license": "Apache-2.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "typecheck": "tsc --noEmit",
+    "generate:sample-kit": "node scripts/generate-sample-kit.mjs",
+    "verify:sample-kit": "node scripts/verify-sample-kit.mjs"
+  },
+  "dependencies": {
+    "@richardmcquiston01/monogram-font-maker": "^0.2.0"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.39.5",
+    "@tailwindcss/vite": "^4.0.0",
+    "eslint": "^9.17.0",
+    "eslint-config-prettier": "^9.1.0",
+    "jszip": "^3.10.1",
+    "opentype.js": "^2.0.0",
+    "prettier": "^3.4.2",
+    "tailwindcss": "^4.0.0",
+    "typescript": "^5.7.2",
+    "typescript-eslint": "^8.19.0",
+    "vite": "^8.0.0"
+  }
+}
