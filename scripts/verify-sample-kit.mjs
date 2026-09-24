@@ -23,13 +23,18 @@ const fontBytes = await generateMonogramFontFromZip(
 const font = opentype.parse(fontBytes);
 console.log('glyphs:', font.numGlyphs);
 
-const glyphA = font.charToGlyph('A');
-const glyphZ = font.charToGlyph('Z');
-assert(glyphA.unicode === 65, 'Glyph "A" is missing or mismapped.');
-assert(glyphA.path.commands.length > 0, 'Glyph "A" has an empty outline.');
-assert(glyphZ.unicode === 90, 'Glyph "Z" is missing or mismapped.');
-assert(glyphZ.path.commands.length > 0, 'Glyph "Z" has an empty outline.');
+const LETTERS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+for (const letter of LETTERS) {
+  const glyph = font.charToGlyph(letter);
+  assert(
+    glyph.unicode === letter.codePointAt(0),
+    `Glyph "${letter}" is missing or mismapped.`,
+  );
+  assert(
+    glyph.path.commands.length > 0,
+    `Glyph "${letter}" has an empty outline.`,
+  );
+}
 
-console.log('has A:', true, glyphA.path.commands.length);
-console.log('has Z:', true, glyphZ.path.commands.length);
+console.log(`Verified outlines for all ${LETTERS.length} letters.`);
 console.log('Sample kit verified successfully.');

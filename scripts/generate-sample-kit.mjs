@@ -21,7 +21,13 @@ function buildLetterSvg(font, letter) {
   const unitsPerEm = font.unitsPerEm;
   const ascender = font.ascender;
   const descender = font.descender;
-  const glyph = font.charToGlyph(letter);
+  const glyphIndex = font.charToGlyphIndex(letter);
+  if (glyphIndex === 0) {
+    throw new Error(
+      `Source font "${SOURCE_FONT_PATH}" has no glyph for letter "${letter}".`,
+    );
+  }
+  const glyph = font.glyphs.get(glyphIndex);
   const glyphHeight = ascender - descender;
 
   const path = glyph.getPath(0, ascender, unitsPerEm);

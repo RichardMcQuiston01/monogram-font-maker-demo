@@ -153,7 +153,22 @@ async function generateFontFromSelectedZip(): Promise<void> {
       return;
     }
 
-    await loadPreviewFont(fontBytes);
+    const fontFace = await loadPreviewFont(fontBytes);
+
+    // A newer run may have started (and even finished) while the
+    // FontFace above was loading — re-check before publishing anything
+    // this run produced. Everything from here on is synchronous, so
+    // once this check passes nothing can supersede it mid-update.
+    if (generationId !== activeGenerationId) {
+      return;
+    }
+
+    if (activeFontFace) {
+      document.fonts.delete(activeFontFace);
+    }
+    document.fonts.add(fontFace);
+    activeFontFace = fontFace;
+
     updateDownloadLink(fontBytes, familyName);
 
     previewText.style.fontFamily = `'${PREVIEW_FONT_FAMILY}'`;
@@ -180,15 +195,10 @@ function formatFileSize(bytes: number): string {
   return `${megabytes.toFixed(1)} MB`;
 }
 
-async function loadPreviewFont(fontBytes: ArrayBuffer): Promise<void> {
-  if (activeFontFace) {
-    document.fonts.delete(activeFontFace);
-  }
-
+async function loadPreviewFont(fontBytes: ArrayBuffer): Promise<FontFace> {
   const fontFace = new FontFace(PREVIEW_FONT_FAMILY, fontBytes);
   await fontFace.load();
-  document.fonts.add(fontFace);
-  activeFontFace = fontFace;
+  return fontFace;
 }
 
 function updateDownloadLink(fontBytes: ArrayBuffer, familyName: string): void {
