@@ -98,11 +98,15 @@ const previewTextInput = requireElement<HTMLInputElement>(
 const previewText = requireElement<HTMLDivElement>('#previewText');
 const downloadLink = requireElement<HTMLAnchorElement>('#downloadLink');
 
+const MAX_ZIP_FILE_SIZE_BYTES = 25 * 1024 * 1024;
+
 let selectedZipFile: File | null = null;
 let activeFontFace: FontFace | null = null;
 let activeDownloadUrl: string | null = null;
+let activeGenerationId = 0;
 
 zipInput.addEventListener('change', () => {
+  activeGenerationId += 1;
   selectedZipFile = zipInput.files?.[0] ?? null;
   generateButton.disabled = selectedZipFile === null;
   setStatusMessage('');
@@ -121,6 +125,16 @@ async function generateFontFromSelectedZip(): Promise<void> {
     return;
   }
 
+  if (selectedZipFile.size > MAX_ZIP_FILE_SIZE_BYTES) {
+    setStatusMessage(
+      `ZIP is too large (${formatFileSize(selectedZipFile.size)}). ` +
+        `Please upload one under ${formatFileSize(MAX_ZIP_FILE_SIZE_BYTES)}.`,
+      'error',
+    );
+    return;
+  }
+
+  const generationId = ++activeGenerationId;
   const familyName = familyNameInput.value.trim() || DEFAULT_FAMILY_NAME;
 
   generateButton.disabled = true;
@@ -132,7 +146,29 @@ async function generateFontFromSelectedZip(): Promise<void> {
       familyName,
     });
 
-    await loadPreviewFont(fontBytes);
+    // A newer selection or run started while this one was in flight —
+    // its result belongs to a stale request, so it must not overwrite
+    // the preview or download link for the latest one.
+    if (generationId !== activeGenerationId) {
+      return;
+    }
+
+    const fontFace = await loadPreviewFont(fontBytes);
+
+    // A newer run may have started (and even finished) while the
+    // FontFace above was loading — re-check before publishing anything
+    // this run produced. Everything from here on is synchronous, so
+    // once this check passes nothing can supersede it mid-update.
+    if (generationId !== activeGenerationId) {
+      return;
+    }
+
+    if (activeFontFace) {
+      document.fonts.delete(activeFontFace);
+    }
+    document.fonts.add(fontFace);
+    activeFontFace = fontFace;
+
     updateDownloadLink(fontBytes, familyName);
 
     previewText.style.fontFamily = `'${PREVIEW_FONT_FAMILY}'`;
@@ -142,22 +178,27 @@ async function generateFontFromSelectedZip(): Promise<void> {
 
     setStatusMessage(`Generated "${familyName}" successfully.`, 'success');
   } catch (error) {
+    if (generationId !== activeGenerationId) {
+      return;
+    }
     previewPanel.hidden = true;
     setStatusMessage(toErrorMessage(error), 'error');
   } finally {
-    generateButton.disabled = false;
+    if (generationId === activeGenerationId) {
+      generateButton.disabled = false;
+    }
   }
 }
 
-async function loadPreviewFont(fontBytes: ArrayBuffer): Promise<void> {
-  if (activeFontFace) {
-    document.fonts.delete(activeFontFace);
-  }
+function formatFileSize(bytes: number): string {
+  const megabytes = bytes / (1024 * 1024);
+  return `${megabytes.toFixed(1)} MB`;
+}
 
+async function loadPreviewFont(fontBytes: ArrayBuffer): Promise<FontFace> {
   const fontFace = new FontFace(PREVIEW_FONT_FAMILY, fontBytes);
   await fontFace.load();
-  document.fonts.add(fontFace);
-  activeFontFace = fontFace;
+  return fontFace;
 }
 
 function updateDownloadLink(fontBytes: ArrayBuffer, familyName: string): void {

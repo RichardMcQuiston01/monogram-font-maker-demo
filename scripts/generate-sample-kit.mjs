@@ -10,7 +10,10 @@ import opentype from 'opentype.js';
 import JSZip from 'jszip';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const SOURCE_FONT_PATH = '/usr/share/fonts/truetype/dejavu/DejaVuSerif-Bold.ttf';
+const DEFAULT_SOURCE_FONT_PATH =
+  '/usr/share/fonts/truetype/dejavu/DejaVuSerif-Bold.ttf';
+const SOURCE_FONT_PATH =
+  process.env.SAMPLE_KIT_FONT_PATH ?? DEFAULT_SOURCE_FONT_PATH;
 const OUTPUT_ZIP_PATH = join(__dirname, '..', 'public', 'sample-monogram-kit.zip');
 const LETTERS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
 
@@ -18,7 +21,13 @@ function buildLetterSvg(font, letter) {
   const unitsPerEm = font.unitsPerEm;
   const ascender = font.ascender;
   const descender = font.descender;
-  const glyph = font.charToGlyph(letter);
+  const glyphIndex = font.charToGlyphIndex(letter);
+  if (glyphIndex === 0) {
+    throw new Error(
+      `Source font "${SOURCE_FONT_PATH}" has no glyph for letter "${letter}".`,
+    );
+  }
+  const glyph = font.glyphs.get(glyphIndex);
   const glyphHeight = ascender - descender;
 
   const path = glyph.getPath(0, ascender, unitsPerEm);
@@ -33,7 +42,16 @@ function buildLetterSvg(font, letter) {
 }
 
 async function main() {
-  const fontBuffer = readFileSync(SOURCE_FONT_PATH);
+  let fontBuffer;
+  try {
+    fontBuffer = readFileSync(SOURCE_FONT_PATH);
+  } catch (error) {
+    throw new Error(
+      `Could not read source font at "${SOURCE_FONT_PATH}". Install a ` +
+        `TrueType/OpenType font there, or set SAMPLE_KIT_FONT_PATH to an ` +
+        `existing font file. (${error.message})`,
+    );
+  }
   const font = opentype.parse(
     fontBuffer.buffer.slice(
       fontBuffer.byteOffset,
