@@ -1,9 +1,11 @@
-# Project Title
+# Monogram Font Maker Demo
 
 - Author:  Richard McQuiston
 - Website:  https://richardmcquiston.com/
 
 ## Overview
+
+TypeScript based Single Page Application (SPA) demo site demonstrating features of the @richardmcquiston01/monogram-font-maker NPM package.  Demo to be deployed from 'main' branch to Vercel.
 
 ## Getting Started
 
